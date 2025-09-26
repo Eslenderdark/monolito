@@ -22,6 +22,13 @@ isAuth = (req, res, next) => {
     res.redirect('/login');
 }
 
+isAdmin = (req, res, next) => {
+    if (req.cookies && req.cookies.user) {
+        return next();
+    }
+    res.redirect('/login');
+}
+
 llamdaLogin = (req, res, next) => {
     res.render('login');
 }
