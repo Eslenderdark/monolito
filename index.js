@@ -23,6 +23,7 @@ isAuth = (req, res, next) => {
 }
 
 //Comentario para verificar el push
+//test para ver si se ve en el issues
 isAdmin = (req, res, next) => {
     if (req.cookies && req.cookies.user) {
         return next();
