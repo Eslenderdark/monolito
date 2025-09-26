@@ -22,6 +22,7 @@ isAuth = (req, res, next) => {
     res.redirect('/login');
 }
 
+//Comentario para verificar el push
 isAdmin = (req, res, next) => {
     if (req.cookies && req.cookies.user) {
         return next();
