@@ -1,5 +1,6 @@
 const express = require('express')
 const cookiesParser = require('cookie-parser');
+const { title } = require('process');
 const app = express()
 const port = 3000
 
@@ -12,7 +13,7 @@ app.use(cookiesParser());
 
 app.get('/', (req, res) => {
     // sql
-    res.render('index', { title: 'Mi primer web', name: 'Adri' });
+    res.render('index', { title: 'Mi primer web', name1: 'Test arriba', name2: 'Test abajo' });
 })
 
 isAuth = (req, res, next) => {
@@ -25,32 +26,45 @@ isAuth = (req, res, next) => {
 //Comentario para verificar el push
 //test para ver si se ve en el issues
 isAdmin = (req, res, next) => {
-    if (req.cookies && req.cookies.user) {
+    if (req.cookies && req.cookies.admin) {
         return next();
     }
     res.redirect('/login');
 }
 
-llamdaLogin = (req, res, next) => {
-    res.render('login');
-}
-
-app.get('/login', llamdaLogin); { }
 
 // Esta es la ruta del login
 app.get('/login', (req, res) => {
     //esto hace que nos envie al login (login.ejs)
-    res.render('login');
+    res.render('login', {
+        title: 'Login',
+        name1: 'Identificate',
+        name2: 'Para continuar'
+    });
+
 })
 app.get('/logout', (req, res) => {
     res.clearCookie('user');
+    res.clearCookie('admin');
     res.redirect('login');
 })
 app.get('/home', isAuth, (req, res) => {
     //leeriamos el usuario de la cookie
     //conslta en la bbdd del usuario
     //se lo enviamos por parametro al render
-    res.render('home')
+    res.render('home', {
+        title: 'Bienvenido',
+        name1: 'Usuario normal',
+        name2: 'Puedes ver el contenido'
+    });
+})
+
+app.get('/homeadmin', isAdmin, (req, res) => {
+    res.render('homeadmin',{
+        title: 'Bienvenido',
+        name1: 'Usuario administrador',
+        name2: 'Puedes ver el contenido de administrador'
+    } )
 })
 
 // Esta es la ruta que gestiona el formulario del login
@@ -58,13 +72,18 @@ app.post('/login', (req, res) => {
     // user y password en el (name="") que hay en el login.ejs
     const { user, password } = req.body;
     if (user === 'adri' && password === '1234') {
-        console.log('Login correcto')
+        console.log('Login correcto usuario normal');
         res.cookie('user', user); //aqui meteriamos tmb las opciones - js no secure
         res.redirect('home');
+    } else if (user === 'admin' && password === '1111') {
+        console.log('Login correcto admin')
+        res.cookie('admin', user); //aqui meteriamos tmb las opciones - js no secure
+        res.redirect('homeadmin');
     } else {
         // res.send('Login incorrecto')
         res.status(401).redirect('login'); //no autorizado / Una menera de hacerlo
     }
+
 })
 
 // gestion de los parametros post
