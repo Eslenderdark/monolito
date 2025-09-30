@@ -4,6 +4,11 @@ const { title } = require('process');
 const app = express()
 const port = 3000
 
+const Database = require('better-sqlite3');
+const db = new Database('database.sqlite', { verbose: console.log });
+const bcrypt = require('bcrypt');
+
+
 app.set('view engine', 'ejs')
 
 //Aqui hacemos que USE los const descargados
@@ -60,41 +65,59 @@ app.get('/home', isAuth, (req, res) => {
 })
 
 app.get('/homeadmin', isAdmin, (req, res) => {
-    res.render('homeadmin',{
+    res.render('homeadmin', {
         title: 'Bienvenido',
         name1: 'Usuario administrador',
         name2: 'Puedes ver el contenido de administrador'
-    } )
+    })
 })
 
 // Esta es la ruta que gestiona el formulario del login
 app.post('/login', (req, res) => {
     // user y password en el (name="") que hay en el login.ejs
+
     const { user, password } = req.body;
-    if (user === 'adri' && password === '1234') {
-        console.log('Login correcto usuario normal');
-        res.cookie('user', user); //aqui meteriamos tmb las opciones - js no secure
-        res.redirect('home');
-    } else if (user === 'admin' && password === '1111') {
-        console.log('Login correcto admin')
-        res.cookie('admin', user); //aqui meteriamos tmb las opciones - js no secure
-        res.redirect('homeadmin');
+    // if (user === 'adri' && password === '1234') {
+    //     console.log('Login correcto usuario normal');
+    //     res.cookie('user', user); //aqui meteriamos tmb las opciones - js no secure
+    //     res.redirect('home');
+    // } else if (user === 'admin' && password === '1111') {
+    //     console.log('Login correcto admin')
+    //     res.cookie('admin', user); //aqui meteriamos tmb las opciones - js no secure
+    //     res.redirect('homeadmin');
+    // } else {
+    //     // res.send('Login incorrecto')
+    //     res.status(401).redirect('login'); //no autorizado / Una menera de hacerlo
+    // }
+
+
+    //Seleccionamos el usuario en la bbdd
+    const seleccionar = db.prepare('select * from usersdb where username = ?');
+    //console.log de la bbdd
+    userdb = seleccionar.get(user);
+    console.log(userdb);
+
+    // Comprobamos que el user introducido coincida con el de la BD
+    // Comprobamos que la contraseña introducida coincida con el hash guardado 
+    // bcrypt.compareSync() sirve para comparar la contraseña hasheada y no una nueva
+
+    if (user === userdb.username && bcrypt.compareSync(password, userdb.password)) {
+        if (userdb.role === 'admin') {
+            console.log('Login correcto admin')
+            res.cookie('admin', userdb);
+            res.redirect('homeadmin');
+        } else {
+            console.log('Login correcto usuario');
+            res.cookie('user', userdb);
+            res.redirect('home');
+        }
     } else {
-        // res.send('Login incorrecto')
-        res.status(401).redirect('login'); //no autorizado / Una menera de hacerlo
+        res.status(401).redirect('login');
     }
+
 
 })
 
-// gestion de los parametros post
-// app.post('/otramas', (req, res) => {
-//     //manera 1
-//     const { user, password } = req.body;
-//     //manera 2
-//     const user2 = req.body.user;
-//     const password2 = req.body.password;
-//     res.send('Otra más')
-// })
 
 app.listen(port, () => {
     console.log(`Example app listening on port http://localhost:${port}`)
