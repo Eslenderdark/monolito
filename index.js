@@ -1,29 +1,24 @@
-// const express = require('express');
+const express = require('express');
 const cookiesParser = require('cookie-parser');
-// const { title } = require('process');
-// const app = express();
-const port = 3000;
-
-//Ejemplo de Actividad 2
-const express = require("express")   // ❌ comillas dobles y sin ;
-const app = express()                // ❌ sin ;
-console.log("Hola mundo")            // ❌ comillas dobles y sin ;
-
-
-
 const Database = require('better-sqlite3');
-const db = new Database('database.sqlite', { verbose: console.log });
 const bcrypt = require('bcrypt');
 
+const app = express();
+const port = 3000;
+
+// Configuración de la base de datos
+const db = new Database('database.sqlite', { verbose: console.log });
+
+// Motor de plantillas
 app.set('view engine', 'ejs');
 
-//Aqui hacemos que USE los const descargados
-app.use(express.urlencoded());
+// Middleware
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookiesParser());
 
+// Ruta principal
 app.get('/', (req, res) => {
-  // sql
   res.render('index', {
     title: 'Mi primer web',
     name1: 'Test arriba',
@@ -31,6 +26,7 @@ app.get('/', (req, res) => {
   });
 });
 
+// Middleware de autenticación
 const isAuth = (req, res, next) => {
   if (req.cookies && req.cookies.user) {
     return next();
@@ -38,8 +34,6 @@ const isAuth = (req, res, next) => {
   res.redirect('/login');
 };
 
-//Comentario para verificar el push
-//test para ver si se ve en el issues
 const isAdmin = (req, res, next) => {
   if (req.cookies && req.cookies.admin) {
     return next();
@@ -47,24 +41,24 @@ const isAdmin = (req, res, next) => {
   res.redirect('/login');
 };
 
-// Esta es la ruta del login
+// Ruta de login
 app.get('/login', (req, res) => {
-  //esto hace que nos envie al login (login.ejs)
   res.render('login', {
     title: 'Login',
-    name1: 'Identificate',
+    name1: 'Identifícate',
     name2: 'Para continuar',
   });
 });
+
+// Logout
 app.get('/logout', (req, res) => {
   res.clearCookie('user');
   res.clearCookie('admin');
   res.redirect('login');
 });
+
+// Página para usuario normal
 app.get('/home', isAuth, (req, res) => {
-  //leeriamos el usuario de la cookie
-  //conslta en la bbdd del usuario
-  //se lo enviamos por parametro al render
   res.render('home', {
     title: 'Bienvenido',
     name1: 'Usuario normal',
@@ -72,6 +66,7 @@ app.get('/home', isAuth, (req, res) => {
   });
 });
 
+// Página para administrador
 app.get('/homeadmin', isAdmin, (req, res) => {
   res.render('homeadmin', {
     title: 'Bienvenido',
@@ -80,38 +75,14 @@ app.get('/homeadmin', isAdmin, (req, res) => {
   });
 });
 
-// Esta es la ruta que gestiona el formulario del login
+// Lógica de login
 app.post('/login', (req, res) => {
-  // user y password en el (name="") que hay en el login.ejs
-
   const { user, password } = req.body;
-  // if (user === 'adri' && password === '1234') {
-  //     console.log('Login correcto usuario normal');
-  //     res.cookie('user', user); //aqui meteriamos tmb las opciones - js no secure
-  //     res.redirect('home');
-  // } else if (user === 'admin' && password === '1111') {
-  //     console.log('Login correcto admin')
-  //     res.cookie('admin', user); //aqui meteriamos tmb las opciones - js no secure
-  //     res.redirect('homeadmin');
-  // } else {
-  //     // res.send('Login incorrecto')
-  //     res.status(401).redirect('login'); //no autorizado / Una menera de hacerlo
-  // }
 
-  //Seleccionamos el usuario en la bbdd
-  const seleccionar = db.prepare('select * from usersdb where username = ?');
-  //console.log de la bbdd
+  const seleccionar = db.prepare('SELECT * FROM usersdb WHERE username = ?');
   const userdb = seleccionar.get(user);
-  console.log(userdb);
 
-  // Comprobamos que el user introducido coincida con el de la BD
-  // Comprobamos que la contraseña introducida coincida con el hash guardado
-  // bcrypt.compareSync() sirve para comparar la contraseña hasheada y no una nueva
-
-  if (
-    user === userdb.username &&
-    bcrypt.compareSync(password, userdb.password)
-  ) {
+  if (userdb && bcrypt.compareSync(password, userdb.password)) {
     if (userdb.role === 'admin') {
       console.log('Login correcto admin');
       res.cookie('admin', userdb);
@@ -126,6 +97,7 @@ app.post('/login', (req, res) => {
   }
 });
 
+// Servidor en marcha
 app.listen(port, () => {
-  console.log(`Example app listening on port http://localhost:${port}`);
+  console.log(`Example app listening on http://localhost:${port}`);
 });
