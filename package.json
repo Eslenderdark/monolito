@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint:fix && npm run format",
+    "test": "jets",
     "start": "node index.js",
     "dev": "nodemon index.js",
     "prepare": "husky",
