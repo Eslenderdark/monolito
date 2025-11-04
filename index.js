@@ -50,6 +50,14 @@ app.get('/login', (req, res) => {
   });
 });
 
+app.get('/login', (req, res) => {
+  res.render('login', {
+    title: 'Registro',
+    name1: 'Regístrate',
+    name2: 'Para continuar',
+  });
+});
+
 // Logout
 app.get('/logout', (req, res) => {
   res.clearCookie('user');
@@ -96,6 +104,31 @@ app.post('/login', (req, res) => {
     res.status(401).redirect('login');
   }
 });
+
+
+app.post('/registro', (req, res) => {
+  const { username, password } = req.body;
+
+  // Verificar si el usuario ya existe
+  const seleccionar = db.prepare('SELECT * FROM usersdb WHERE username = ?');
+  const existente = seleccionar.get(username);
+
+  if (existente) {
+    console.log('El usuario ya existe');
+    return res.status(400).redirect('registro');
+  }
+
+  // Hashear contraseña
+  const hash = bcrypt.hashSync(password, 10);
+
+  // Insertar nuevo usuario con rol "user" por defecto
+  const insertar = db.prepare('INSERT INTO usersdb (username, password, role) VALUES (?, ?, ?)');
+  insertar.run(username, hash, 'user');
+
+  console.log('Usuario registrado correctamente');
+  res.redirect('login');
+});
+
 
 // Servidor en marcha
 app.listen(port, () => {
