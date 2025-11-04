@@ -105,7 +105,6 @@ app.post('/login', (req, res) => {
   }
 });
 
-
 app.post('/registro', (req, res) => {
   const { username, password } = req.body;
 
@@ -122,13 +121,14 @@ app.post('/registro', (req, res) => {
   const hash = bcrypt.hashSync(password, 10);
 
   // Insertar nuevo usuario con rol "user" por defecto
-  const insertar = db.prepare('INSERT INTO usersdb (username, password, role) VALUES (?, ?, ?)');
+  const insertar = db.prepare(
+    'INSERT INTO usersdb (username, password, role) VALUES (?, ?, ?)',
+  );
   insertar.run(username, hash, 'user');
 
   console.log('Usuario registrado correctamente');
   res.redirect('login');
 });
-
 
 // Servidor en marcha
 app.listen(port, () => {
